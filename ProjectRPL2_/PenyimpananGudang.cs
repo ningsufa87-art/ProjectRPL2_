@@ -39,22 +39,75 @@ namespace ProjectRPL2_
         internal sealed record BarangKeranjang(int IdBarang, string NamaBarang, int Jumlah, decimal HargaSatuan);
         internal sealed record PenjualanHarian(DateTime Tanggal, decimal TotalPenjualan);
 
+        // Port of the Python insertion_sort / merge / tim_sort helpers.
+        // The sort is stable and is used for the category-grouped inventory view.
+        internal static List<T> timSort<T>(List<T> daftar, Comparison<T> bandingkan, bool urutTerbalik = false)
+        {
+            const int ukuranRun = 32;
+            int jumlahData = daftar.Count;
+            for (int awal = 0; awal < jumlahData; awal += ukuranRun)
+                insertionSort(daftar, awal, Math.Min(awal + ukuranRun - 1, jumlahData - 1), bandingkan, urutTerbalik);
+            for (int ukuran = ukuranRun; ukuran < jumlahData; ukuran *= 2)
+            {
+                for (int kiri = 0; kiri < jumlahData; kiri += 2 * ukuran)
+                {
+                    int tengah = Math.Min(kiri + ukuran - 1, jumlahData - 1);
+                    int kanan = Math.Min(kiri + 2 * ukuran - 1, jumlahData - 1);
+                    if (tengah < kanan) merge(daftar, kiri, tengah, kanan, bandingkan, urutTerbalik);
+                }
+                if (ukuran > jumlahData / 2) break;
+            }
+            return daftar;
+        }
+
+        private static void insertionSort<T>(List<T> daftar, int kiri, int kanan, Comparison<T> bandingkan, bool urutTerbalik)
+        {
+            for (int indeks = kiri + 1; indeks <= kanan; indeks++)
+            {
+                T sementara = daftar[indeks];
+                int posisi = indeks - 1;
+                while (posisi >= kiri && (urutTerbalik ? bandingkan(daftar[posisi], sementara) < 0 : bandingkan(daftar[posisi], sementara) > 0))
+                {
+                    daftar[posisi + 1] = daftar[posisi];
+                    posisi--;
+                }
+                daftar[posisi + 1] = sementara;
+            }
+        }
+
+        private static void merge<T>(List<T> daftar, int kiri, int tengah, int kanan, Comparison<T> bandingkan, bool urutTerbalik)
+        {
+            List<T> sisiKiri = daftar.GetRange(kiri, tengah - kiri + 1);
+            List<T> sisiKanan = daftar.GetRange(tengah + 1, kanan - tengah);
+            int indeksKiri = 0, indeksKanan = 0, tujuan = kiri;
+            while (indeksKiri < sisiKiri.Count && indeksKanan < sisiKanan.Count)
+            {
+                int hasilBanding = bandingkan(sisiKiri[indeksKiri], sisiKanan[indeksKanan]);
+                bool ambilKiri = urutTerbalik ? hasilBanding >= 0 : hasilBanding <= 0;
+                daftar[tujuan++] = ambilKiri ? sisiKiri[indeksKiri++] : sisiKanan[indeksKanan++];
+            }
+            while (indeksKiri < sisiKiri.Count) daftar[tujuan++] = sisiKiri[indeksKiri++];
+            while (indeksKanan < sisiKanan.Count) daftar[tujuan++] = sisiKanan[indeksKanan++];
+        }
+
         internal static List<Barang> muatData(bool includeDeleted = true)
         {
             var kategoriMenurutId = muatKategori();
             var daftarBarang = new List<Barang>();
+            if (!File.Exists(fileDataBarang)) return daftarBarang;
             foreach (string barisData in File.ReadLines(fileDataBarang, Encoding.UTF8))
             {
                 if (cobaBacaBarang(barisData, kategoriMenurutId, out Barang barang) &&
                     (includeDeleted || !barang.StatusBarang.Equals("terhapus", StringComparison.OrdinalIgnoreCase)))
                     daftarBarang.Add(barang);
             }
-            return daftarBarang.OrderBy(barang => barang.IdBarang).ToList();
+            return timSort(daftarBarang, (barangKiri, barangKanan) => barangKiri.IdBarang.CompareTo(barangKanan.IdBarang));
         }
 
         internal static IReadOnlyDictionary<int, string> muatKategori()
         {
             var kategoriMenurutId = new Dictionary<int, string>();
+            if (!File.Exists(fileKategori)) return kategoriMenurutId;
             foreach (string barisData in File.ReadLines(fileKategori, Encoding.UTF8))
             {
                 string[] kolomData = barisData.Split(',', 2);
@@ -259,7 +312,9 @@ namespace ProjectRPL2_
                 var keranjangBelanja = muatKeranjang();
                 if (keranjangBelanja.Count == 0) { pesan = "Keranjang masih kosong."; return false; }
                 string dataBarangAsli = File.ReadAllText(fileDataBarang, Encoding.UTF8);
-                string riwayatTransaksiAsli = File.ReadAllText(fileRiwayatTransaksi, Encoding.UTF8);
+                bool riwayatSudahAda = File.Exists(fileRiwayatTransaksi);
+                string riwayatTransaksiAsli = riwayatSudahAda ? File.ReadAllText(fileRiwayatTransaksi, Encoding.UTF8) : string.Empty;
+                bool keranjangSudahAda = File.Exists(fileKeranjang);
                 string keranjangAsli = File.Exists(fileKeranjang) ? File.ReadAllText(fileKeranjang, Encoding.UTF8) : string.Empty;
                 var daftarBarang = muatData();
                 var jumlahPerBarang = keranjangBelanja.GroupBy(barangKeranjang => barangKeranjang.IdBarang).ToDictionary(group => group.Key, group => group.Sum(barangKeranjang => barangKeranjang.Jumlah));
@@ -306,8 +361,10 @@ namespace ProjectRPL2_
                 catch
                 {
                     File.WriteAllText(fileDataBarang, dataBarangAsli, pengkodeanUtf8);
-                    File.WriteAllText(fileRiwayatTransaksi, riwayatTransaksiAsli, pengkodeanUtf8);
-                    File.WriteAllText(fileKeranjang, keranjangAsli, pengkodeanUtf8);
+                    if (riwayatSudahAda) File.WriteAllText(fileRiwayatTransaksi, riwayatTransaksiAsli, pengkodeanUtf8);
+                    else if (File.Exists(fileRiwayatTransaksi)) File.Delete(fileRiwayatTransaksi);
+                    if (keranjangSudahAda) File.WriteAllText(fileKeranjang, keranjangAsli, pengkodeanUtf8);
+                    else if (File.Exists(fileKeranjang)) File.Delete(fileKeranjang);
                     throw;
                 }
 
@@ -317,7 +374,9 @@ namespace ProjectRPL2_
 
         internal static List<PenjualanHarian> summaryPenjualan()
         {
+            if (!File.Exists(fileRiwayatTransaksi)) return [];
             string isiData = File.ReadAllText(fileRiwayatTransaksi, Encoding.UTF8);
+            if (string.IsNullOrWhiteSpace(isiData)) return [];
             var hasilPenjualan = new Dictionary<DateTime, decimal>();
             foreach (string blokTransaksi in isiData.Split("=== TRANSAKSI ===", StringSplitOptions.RemoveEmptyEntries))
             {
@@ -332,6 +391,14 @@ namespace ProjectRPL2_
                 hasilPenjualan[tanggal] = hasilPenjualan.GetValueOrDefault(tanggal) + totalHarga;
             }
             return hasilPenjualan.OrderBy(pasangan => pasangan.Key).Select(pasangan => new PenjualanHarian(pasangan.Key, pasangan.Value)).ToList();
+        }
+
+        internal static int hitungTransaksiHariIni(DateTime tanggalSaatIni)
+        {
+            if (!File.Exists(fileRiwayatTransaksi)) return 0;
+            string tanggal = tanggalSaatIni.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            return File.ReadLines(fileRiwayatTransaksi, Encoding.UTF8)
+                .Count(barisData => Regex.IsMatch(barisData, @"^Tanggal\s*:\s*" + Regex.Escape(tanggal), RegexOptions.CultureInvariant));
         }
 
         internal static bool restokBarang(int idBarang, int jumlahTambahan, out string pesan)
@@ -367,57 +434,6 @@ namespace ProjectRPL2_
                         throw;
                     }
                     pesan = $"Stok {barang.NamaBarang} berhasil ditambah menjadi {stokBaru}.";
-                    return true;
-                }
-            }
-            pesan = "Produk tidak ditemukan.";
-            return false;
-        }
-
-        internal static bool checkout(int idBarang, int jumlah, string namaKasir, string metodePembayaran,
-            decimal uangDibayarkan, out string pesan)
-        {
-            if (jumlah <= 0) { pesan = "Jumlah pembelian harus lebih dari nol."; return false; }
-            if (!(metodePembayaran.Equals("Cash", StringComparison.OrdinalIgnoreCase) ||
-                  metodePembayaran.Equals("QRIS", StringComparison.OrdinalIgnoreCase) ||
-                  metodePembayaran.Equals("Debit", StringComparison.OrdinalIgnoreCase)))
-            { pesan = "Metode pembayaran tidak dikenal."; return false; }
-
-            lock (kunciBerkas)
-            {
-                string dataAsli = File.ReadAllText(fileDataBarang, Encoding.UTF8);
-                string[] barisData = File.ReadAllLines(fileDataBarang, Encoding.UTF8);
-                for (int indeksBaris = 0; indeksBaris < barisData.Length; indeksBaris++)
-                {
-                    if (!cobaBacaBarang(barisData[indeksBaris], muatKategori(), out Barang barang) || barang.IdBarang != idBarang)
-                        continue;
-                    if (!barang.StatusBarang.Equals("aktif", StringComparison.OrdinalIgnoreCase))
-                    { pesan = "Produk sudah tidak aktif."; return false; }
-                    if (jumlah > barang.Stok)
-                    { pesan = $"Stok tidak cukup. Tersedia {barang.Stok} unit."; return false; }
-
-                    decimal totalHarga = barang.Harga * jumlah;
-                    if (metodePembayaran.Equals("Cash", StringComparison.OrdinalIgnoreCase) && uangDibayarkan < totalHarga)
-                    { pesan = $"Uang pembayaran kurang. Total belanja {formatRupiah(totalHarga)}."; return false; }
-                    if (!metodePembayaran.Equals("Cash", StringComparison.OrdinalIgnoreCase)) uangDibayarkan = totalHarga;
-
-                    string[] kolomData = barisData[indeksBaris].Split(',');
-                    kolomData[2] = (barang.Stok - jumlah).ToString(CultureInfo.InvariantCulture);
-                    if (kolomData.Length == 4) kolomData = [.. kolomData, "aktif"];
-                    barisData[indeksBaris] = string.Join(',', kolomData);
-                    simpanDataBarang(barisData);
-
-                    try
-                    {
-                        catatTransaksi(barang, jumlah, namaKasir, metodePembayaran, totalHarga, uangDibayarkan);
-                    }
-                    catch
-                    {
-                        File.WriteAllText(fileDataBarang, dataAsli, pengkodeanUtf8);
-                        throw;
-                    }
-                    decimal kembalian = uangDibayarkan - totalHarga;
-                    pesan = $"Transaksi berhasil. Total {formatRupiah(totalHarga)}; kembalian {formatRupiah(kembalian)}.";
                     return true;
                 }
             }
@@ -494,36 +510,11 @@ namespace ProjectRPL2_
             File.Move(fileSementara, fileDataBarang, true);
         }
 
-        private static void catatTransaksi(Barang barang, int jumlah, string namaKasir, string metodePembayaran,
-            decimal totalHarga, decimal uangDibayar)
-        {
-            string tanggalHariIni = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            int jumlahTransaksi = File.ReadLines(fileRiwayatTransaksi, Encoding.UTF8)
-                .Count(barisData => Regex.IsMatch(barisData, @"^Tanggal\s*:\s*" + Regex.Escape(tanggalHariIni), RegexOptions.CultureInvariant));
-            DateTime now = DateTime.Now;
-            decimal kembalian = uangDibayar - totalHarga;
-            string transaction = string.Join(Environment.NewLine,
-                "=== TRANSAKSI ===",
-                $"ID Transaksi: SMK{jumlahTransaksi + 1:000}{now:yyyyMMddHHmmss}",
-                $"Tanggal : {now:yyyy-MM-dd HH:mm}",
-                $"Kasir   : {namaKasir}",
-                $"Metode  : {metodePembayaran}",
-                "----------------------------------------",
-                $"- [{barang.IdBarang}] {barang.NamaBarang} x{jumlah} = {formatRupiah(barang.Harga * jumlah)}",
-                $"TOTAL: {formatRupiah(totalHarga)}",
-                $"Dibayar: {formatRupiah(uangDibayar)}",
-                $"Kembalian: {formatRupiah(kembalian)}",
-                "----------------------------------------", "", "");
-            File.AppendAllText(fileRiwayatTransaksi, transaction, pengkodeanUtf8);
-        }
-
         private static string catatTransaksi(List<BarangKeranjang> keranjangBelanja, string namaKasir, string metodePembayaran,
             decimal totalHarga, decimal uangDibayar)
         {
-            string tanggalHariIni = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            int jumlahTransaksi = File.ReadLines(fileRiwayatTransaksi, Encoding.UTF8)
-                .Count(barisData => Regex.IsMatch(barisData, @"^Tanggal\s*:\s*" + Regex.Escape(tanggalHariIni), RegexOptions.CultureInvariant));
             DateTime now = DateTime.Now;
+            int jumlahTransaksi = hitungTransaksiHariIni(now);
             decimal kembalian = uangDibayar - totalHarga;
             string idTransaksi = $"SMK{jumlahTransaksi + 1:000}{now:yyyyMMddHHmmss}";
             var barisData = new List<string>

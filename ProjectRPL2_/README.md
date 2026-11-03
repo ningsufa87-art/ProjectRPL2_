@@ -2,6 +2,10 @@
 
 Aplikasi desktop Windows Forms untuk mengelola katalog dan stok SMKMART, mencatat aktivitas gudang, serta memproses penjualan. Kode menggunakan C# dengan .NET 8 dan menyimpan data pada berkas TXT di folder proyek.
 
+UI memakai kontrol WinForms dari Material 3, dengan halaman login, panel terpisah untuk Admin dan Kasir, serta tombol **Keluar / Ganti akun** untuk kembali ke login.
+
+Tema terang dan gelap dapat diganti dari halaman login maupun header Admin/Kasir. Ukuran jendela dan dialog menyesuaikan area kerja layar; tabel daftar barang dan laporan menyesuaikan lebar jendelanya.
+
 ## Persyaratan
 
 - Windows
@@ -19,18 +23,18 @@ dotnet build .\ProjectRPL2_\ProjectRPL2_.csproj
 dotnet run --project .\ProjectRPL2_\ProjectRPL2_.csproj
 ```
 
-Login memakai akun di `ProjectRPL2_\User.txt`. Format setiap baris adalah `username,password,role`. Peran yang didukung: `Admin` dan `Kasir`. Huruf besar/kecil pada username dan peran tidak berpengaruh; password peka huruf besar/kecil. Baris dengan pemisah koma maupun `|` dapat dibaca.
+Login memakai akun di `ProjectRPL2_\User.txt`. Format setiap baris adalah `username,password,role`. Peran yang didukung: `Admin` dan `Kasir`. Username dan password dicocokkan persis setelah spasi awal/akhir dibuang; peran tidak peka huruf besar/kecil. Baris dengan pemisah koma maupun `|` dapat dibaca. Masukkan `0` untuk username dan password untuk keluar.
 
 ## Fitur Admin
 
-- Melihat daftar barang, kategori, stok, harga, dan status.
+- Melihat daftar barang yang dikelompokkan per kategori, termasuk rentang ID, stok, harga, dan peringatan stok rendah di bawah 5 unit.
 - Menambah kategori dan barang baru. ID barang dibuat dari ID kategori; satu kategori menyediakan rentang sampai 99 barang.
 - Menambah stok barang aktif.
 - Mengubah nama, kategori, stok, dan harga barang.
 - Menghapus barang secara lunak ke Recycle Bin, memulihkan barang, atau menghapusnya permanen.
-- Mencari barang berdasarkan ID, nama, atau ID kategori.
+- Mencari barang secara linear berdasarkan ID, nama, atau ID kategori.
 - Membaca riwayat gudang dan transaksi.
-- Melihat ringkasan penjualan harian berdasarkan bulan.
+- Memilih bulan lalu melihat jumlah penjualan per hari dan total bulanan.
 
 ## Fitur Kasir
 
@@ -38,8 +42,15 @@ Login memakai akun di `ProjectRPL2_\User.txt`. Format setiap baris adalah `usern
 - Menambahkan beberapa barang ke keranjang, melihat keranjang, dan menghapus barang dari keranjang.
 - Checkout seluruh keranjang dengan metode Cash, Debit, atau QRIS.
 - Memvalidasi stok dan pembayaran. Pembayaran Cash menghitung kembalian; Debit dan QRIS dibayar sebesar total belanja.
-- Setelah checkout berhasil, struk terperinci ditampilkan, stok diperbarui, keranjang dikosongkan, dan transaksi dicatat.
+- Menampilkan struk barang sebelum pembayaran dan struk transaksi lengkap sesudahnya. Setelah checkout berhasil, stok diperbarui, keranjang dikosongkan, dan transaksi dicatat.
 - Membaca riwayat transaksi dan ringkasan penjualan harian/bulanan.
+
+## Algoritma dan tampilan
+
+- Algoritma TimSort dari kode Python dipindahkan dan digunakan untuk menyusun barang berdasarkan kategori serta ID.
+- Pencarian linear mengikuti pilihan Python: ID, potongan nama, atau kategori.
+- Aplikasi memeriksa ulang stok seluruh barang sebelum checkout supaya transaksi tidak membuat stok negatif.
+- WinForms memakai kontrol Material 3 dengan navigasi panel samping. Tombol **Keluar / Ganti akun** kembali ke halaman login.
 
 ## Berkas data
 
@@ -90,3 +101,4 @@ Aplikasi mencari folder data dengan menaiki folder dari lokasi `.exe` sampai men
 - `FormAdmin.cs` — form Admin dan fitur pengelolaan gudang.
 - `FormKasir.cs` — form Kasir, keranjang belanja, dan checkout.
 - `TampilanPeran.cs` — dialog input, tampilan riwayat, pencarian, dan ringkasan.
+- `TampilanModern.cs` — warna, tata letak, dan gaya kontrol aplikasi.

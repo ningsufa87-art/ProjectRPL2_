@@ -9,8 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="User.txt;data.txt;kategori.txt;keranjang.txt;riwayat_transaksi.txt;riwayat_gudang.txt"
-          CopyToOutputDirectory="PreserveNewest" />
+    <None Update="User.txt;data.txt;kategori.txt;keranjang.txt;riwayat_transaksi.txt;riwayat_gudang.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +25,10 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Material3.WinForms" Version="0.11.0" />
   </ItemGroup>
 
 </Project>
