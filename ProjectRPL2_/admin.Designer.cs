@@ -1,6 +1,6 @@
 ﻿namespace ProjectRPL2_
 {
-    partial class admin
+    partial class AdminForm
     {
         /// <summary>
         /// Required designer variable.
@@ -37,10 +37,10 @@
             ClientSize = new Size(800, 450);
             MaximizeBox = false;
             MinimizeBox = false;
-            Name = "admin";
+            Name = "AdminForm";
             SizeGripStyle = SizeGripStyle.Hide;
-            Text = "admin";
-            TopMost = true;
+            Text = "Dashboard Admin";
+            TopMost = false;
             ResumeLayout(false);
         }
 

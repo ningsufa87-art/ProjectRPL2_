@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
 namespace ProjectRPL2_
 {
-    public partial class kasir : Form
+    public partial class KasirForm : Form
     {
-        public kasir()
+        public KasirForm(string username)
         {
             InitializeComponent();
+            Text = "Dashboard Kasir";
+            RoleDashboard.AddWelcome(this, "Kasir", username);
         }
     }
 }

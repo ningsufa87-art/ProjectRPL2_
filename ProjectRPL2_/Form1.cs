@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Windows.Forms;
 
@@ -6,77 +5,69 @@ namespace ProjectRPL2_
 {
     public partial class Form1 : Form
     {
+        public string Currentuser { get; private set; } = string.Empty;
 
-        public static string CurrentDirectory = "";
-        private object roleLogin;
-
-        public Form1()
-        {
-            InitializeComponent();
-        }
-
-        public string Currentuser { get; private set; }
+        public Form1() => InitializeComponent();
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string username = usernme.Text.Trim();
-            string password = textBox1.Text.Trim();
-
-            if (username == "0" && password == "0")
+            string username = textBox1.Text.Trim();
+            string password = usernme.Text;
+            if (username.Length == 0 || password.Length == 0)
             {
-                Application.Exit();
+                MessageBox.Show("Username dan password wajib diisi.", "Login", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            if (!File.Exists("users.txt"))
+            UserStore.User? user;
+            try
             {
-                MessageBox.Show("File users.txt tidak ditemukan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                user = UserStore.Authenticate(username, password);
+            }
+            catch (FileNotFoundException)
+            {
+                MessageBox.Show("Berkas users.txt tidak ditemukan di folder aplikasi.", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"Berkas users.txt tidak dapat dibaca.\n{ex.Message}", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("Aplikasi tidak memiliki izin untuk membaca users.txt.", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            bool loginSuccess = false;  
-            string rolelogin = "";
-
-            foreach (var line in File.ReadLines("users.txt"))
+            if (user is null)
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                var parts = line.Split(',');
-                if (parts.Length == 3)
-                {
-                    string fileUsername = parts[0].Trim();
-                    string filePassword = parts[1].Trim();
-                    string fileRole = parts[2].Trim();
-                    if (username == fileUsername && password == filePassword)
-                    {
-                        loginSuccess = true;
-                        rolelogin = fileRole;
-                        break;
-                    }
-                }
-            }
-            if (!loginSuccess)
-            {
-                if (rolelogin == "admin")
-                {
-                    Admin adminForm = new Admin();
-                    adminForm.Show();
-                    this.Hide();
-                }
-                else if (rolelogin == "kasir")
-                {
-                    kasir kasirForm = new kasir();
-                    kasirForm.Show();
-                    this.Hide();
-                }
-
+                MessageBox.Show("Username atau password salah, akun ganda, atau peran akun tidak valid.", "Login gagal", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                usernme.Clear();
+                usernme.Focus();
+                return;
             }
 
-            Currentuser = username;
-            MessageBox.Show($"Login berhasil! Selamat datang, {username} ({rolelogin})", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Currentuser = user.Username;
+            Form destination = user.Role switch
+            {
+                "admin" => new AdminForm(Currentuser),
+                "kasir" => new KasirForm(Currentuser),
+                _ => throw new InvalidOperationException("Peran akun tidak didukung.")
+            };
 
-
-
+            Hide();
+            destination.FormClosed += (_, _) =>
+            {
+                textBox1.Clear();
+                usernme.Clear();
+                Show();
+                Activate();
+            };
+            destination.Show(this);
         }
 
+        private void button2_Click(object sender, EventArgs e) =>
+            MessageBox.Show("Silakan hubungi admin untuk mendapatkan akun aplikasi.", "Informasi akun", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }

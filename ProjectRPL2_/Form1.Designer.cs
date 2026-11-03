@@ -75,6 +75,7 @@
             button2.Tag = "";
             button2.Text = "Belum Punya Akun";
             button2.UseVisualStyleBackColor = false;
+            button2.Click += button2_Click;
             // 
             // label3
             // 
@@ -112,7 +113,7 @@
             usernme.Location = new Point(88, 195);
             usernme.Name = "usernme";
             usernme.PasswordChar = '*';
-            usernme.PlaceholderText = "pasword";
+            usernme.PlaceholderText = "Password";
             usernme.RightToLeft = RightToLeft.No;
             usernme.Size = new Size(190, 31);
             usernme.TabIndex = 2;
@@ -135,7 +136,7 @@
             textBox1.Name = "textBox1";
             textBox1.PlaceholderText = "Username";
             textBox1.Size = new Size(190, 31);
-            textBox1.TabIndex = 5;
+            textBox1.TabIndex = 1;
             // 
             // Form1
             // 
@@ -143,7 +144,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Azure;
             ClientSize = new Size(800, 450);
-            ControlBox = false;
+            AcceptButton = button1;
+            ControlBox = true;
             Controls.Add(textBox1);
             Controls.Add(button1);
             Controls.Add(usernme);
