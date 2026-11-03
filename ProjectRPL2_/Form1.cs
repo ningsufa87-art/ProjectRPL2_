@@ -26,17 +26,17 @@ namespace ProjectRPL2_
             }
             catch (FileNotFoundException)
             {
-                MessageBox.Show("Berkas users.txt tidak ditemukan di folder aplikasi.", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Berkas User.txt tidak ditemukan di folder data:\n{WarehouseStore.Root}", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             catch (IOException ex)
             {
-                MessageBox.Show($"Berkas users.txt tidak dapat dibaca.\n{ex.Message}", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Berkas User.txt tidak dapat dibaca.\n{ex.Message}", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             catch (UnauthorizedAccessException)
             {
-                MessageBox.Show("Aplikasi tidak memiliki izin untuk membaca users.txt.", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Aplikasi tidak memiliki izin untuk membaca User.txt.", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

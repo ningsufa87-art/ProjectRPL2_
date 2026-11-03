@@ -4,8 +4,6 @@ namespace ProjectRPL2_
 {
     internal static class UserStore
     {
-        private static string UsersFile => Path.Combine(AppContext.BaseDirectory, "users.txt");
-
         internal sealed record User(string Username, string Role);
 
         internal static User? Authenticate(string username, string password)
@@ -14,19 +12,16 @@ namespace ProjectRPL2_
                 return null;
 
             var matches = new List<(string Username, string Password, string Role)>();
-            foreach (string line in File.ReadLines(UsersFile, Encoding.UTF8))
+            foreach (string line in File.ReadLines(WarehouseStore.UserFile, Encoding.UTF8))
             {
                 if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
                     continue;
-
                 if (!TryParseUser(line, out string fileUsername, out string filePassword, out string role))
                     continue;
-
                 if (fileUsername.Equals(username.Trim(), StringComparison.OrdinalIgnoreCase))
                     matches.Add((fileUsername, filePassword, role));
             }
 
-            // Ambiguous duplicate usernames are rejected instead of authenticating the first row.
             if (matches.Count != 1)
                 return null;
 

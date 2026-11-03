@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="users.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="User.txt;data.txt;kategori.txt;keranjang.txt;riwayat_transaksi.txt;riwayat_gudang.txt"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
