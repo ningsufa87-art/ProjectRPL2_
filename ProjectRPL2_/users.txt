@@ -1,0 +1,2 @@
+Rifgi,admin,admin
+Xavier,kasir,kasir
