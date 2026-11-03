@@ -1,49 +1,49 @@
-# SMKMART — Sistem Kasir dan Pengelolaan Gudang
+# SMKMART — Aplikasi Kasir dan Gudang
 
-Aplikasi desktop Windows Forms untuk mengelola katalog dan stok SMKMART, mencatat aktivitas gudang, serta memproses penjualan. Kode menggunakan C# dengan .NET 8 dan menyimpan data pada berkas TXT di folder proyek.
+Aplikasi desktop Windows Forms untuk melihat stok gudang, melakukan restok, dan mencatat penjualan SMKMART. Aplikasi dibuat dengan C# dan .NET 8.
 
 ## Persyaratan
 
 - Windows
 - .NET 8 SDK
-- Visual Studio dengan beban kerja pengembangan desktop .NET, atau terminal dengan `dotnet`
+- Visual Studio dengan dukungan pengembangan desktop .NET, atau terminal dengan `dotnet`
 
 ## Menjalankan aplikasi
 
-Buka `ProjectRPL2_.slnx` di Visual Studio, lalu jalankan proyek `ProjectRPL2_`.
+1. Buka `ProjectRPL2_.slnx` di Visual Studio.
+2. Pastikan berkas data berada di folder `ProjectRPL2_` seperti susunan di bawah.
+3. Jalankan proyek `ProjectRPL2_`.
 
-Atau jalankan dari PowerShell di folder utama repositori:
+Alternatif melalui terminal dari folder utama repositori:
 
 ```powershell
 dotnet build .\ProjectRPL2_\ProjectRPL2_.csproj
 dotnet run --project .\ProjectRPL2_\ProjectRPL2_.csproj
 ```
 
-Login memakai akun di `ProjectRPL2_\User.txt`. Format setiap baris adalah `username,password,role`. Peran yang didukung: `Admin` dan `Kasir`. Huruf besar/kecil pada username dan peran tidak berpengaruh; password peka huruf besar/kecil. Baris dengan pemisah koma maupun `|` dapat dibaca.
+Aplikasi membaca akun dari `ProjectRPL2_\User.txt`. Setiap baris berformat `username,password,role`. Peran yang dikenali adalah `Admin` dan `Kasir`. Pembaca juga menerima pemisah `|`.
 
-## Fitur Admin
+## Fungsi aplikasi
+
+### Admin
 
 - Melihat daftar barang, kategori, stok, harga, dan status.
-- Menambah kategori dan barang baru. ID barang dibuat dari ID kategori; satu kategori menyediakan rentang sampai 99 barang.
-- Menambah stok barang aktif.
-- Mengubah nama, kategori, stok, dan harga barang.
-- Menghapus barang secara lunak ke Recycle Bin, memulihkan barang, atau menghapusnya permanen.
-- Mencari barang berdasarkan ID, nama, atau ID kategori.
-- Membaca riwayat gudang dan transaksi.
-- Melihat ringkasan penjualan harian berdasarkan bulan.
+- Menambah stok barang yang aktif.
+- Membuka riwayat gudang dan riwayat transaksi.
 
-## Fitur Kasir
+### Kasir
 
-- Melihat barang aktif dan mencari berdasarkan ID, nama, atau kategori.
-- Menambahkan beberapa barang ke keranjang, melihat keranjang, dan menghapus barang dari keranjang.
-- Checkout seluruh keranjang dengan metode Cash, Debit, atau QRIS.
-- Memvalidasi stok dan pembayaran. Pembayaran Cash menghitung kembalian; Debit dan QRIS dibayar sebesar total belanja.
-- Setelah checkout berhasil, struk terperinci ditampilkan, stok diperbarui, keranjang dikosongkan, dan transaksi dicatat.
-- Membaca riwayat transaksi dan ringkasan penjualan harian/bulanan.
+- Melihat barang yang berstatus aktif.
+- Memilih barang dan jumlah yang dijual.
+- Mencatat pembayaran dengan metode Cash, QRIS, atau Debit.
+- Untuk pembayaran Cash, aplikasi menghitung dan mencatat kembalian.
+- Setelah transaksi berhasil, stok berkurang dan riwayat transaksi diperbarui.
+
+Kasir memproses satu jenis barang per transaksi. `keranjang.txt` disertakan sebagai berkas data proyek, tetapi belum digunakan oleh alur aplikasi C#.
 
 ## Berkas data
 
-Seluruh berkas berada di folder `ProjectRPL2_`:
+Simpan berkas berikut di folder proyek `ProjectRPL2_`:
 
 ```text
 ProjectRPL2_/
@@ -55,38 +55,33 @@ ProjectRPL2_/
 └── riwayat_transaksi.txt
 ```
 
-| Berkas | Format |
+Format berkas:
+
+| Berkas | Isi setiap baris |
 | --- | --- |
 | `User.txt` | `username,password,role` |
-| `data.txt` | `id,nama,stok,harga,status`; baris empat kolom juga dibaca dan dianggap berstatus `aktif` |
+| `data.txt` | `id,nama,stok,harga,status` (format empat kolom juga dibaca; status dianggap `aktif`) |
 | `kategori.txt` | `id_kategori,nama_kategori` |
-| `keranjang.txt` | `id,nama,jumlah,harga_satuan`; diisi saat barang dimasukkan ke keranjang dan dikosongkan setelah checkout |
-| `riwayat_gudang.txt` | Catatan tambah, restok, ubah, hapus, restore, dan penghapusan permanen |
-| `riwayat_transaksi.txt` | Catatan item transaksi, waktu, kasir, metode pembayaran, total, pembayaran, dan kembalian |
+| `keranjang.txt` | Disediakan sebagai berkas proyek; belum dipakai aplikasi C# saat ini |
+| `riwayat_gudang.txt` | Catatan perubahan stok dan aktivitas gudang |
+| `riwayat_transaksi.txt` | Catatan transaksi penjualan dan pembayaran |
 
-Kategori barang ditentukan dari kelompok ID: ID 101–199 untuk kategori 1, ID 201–299 untuk kategori 2, dan seterusnya. Barang berstatus `terhapus` tersembunyi dari daftar kasir dan dapat dipulihkan melalui Recycle Bin Admin.
+Baris barang berstatus `terhapus` tetap ditampilkan di halaman admin, tetapi tidak tersedia untuk penjualan. Kategori barang ditentukan dari kelompok angka ID barang, misalnya ID 101 masuk kategori 1 dan ID 201 masuk kategori 2.
 
-Aplikasi mencari folder data dengan menaiki folder dari lokasi `.exe` sampai menemukan `ProjectRPL2_.csproj`, `User.txt`, dan `data.txt`. Jika dijalankan dari hasil publish yang tidak memuat file proyek, aplikasi menggunakan folder `.exe`. Proyek mengatur agar enam berkas TXT disalin ke folder output saat build.
+Berkas TXT disalin ke folder output saat build. Saat dijalankan dari proyek, aplikasi mencari folder proyek yang memuat `ProjectRPL2_.csproj`, `User.txt`, dan `data.txt`; jika folder tersebut tidak ditemukan, aplikasi memakai folder tempat berkas `.exe` berada. Perubahan stok dan riwayat ditulis ke folder data yang sedang dipakai aplikasi.
 
-## Algoritma penting
+## Menjaga data saat menggunakan Git
 
-- Pencarian berdasarkan ID, nama, dan kategori memeriksa katalog aktif.
-- Daftar barang diurutkan berdasarkan ID.
-- ID barang baru menggunakan nomor berikutnya yang tersedia pada rentang kategori dan tidak memakai ulang ID barang terhapus.
-- Checkout menghitung jumlah per barang, memeriksa ulang seluruh stok sebelum mengurangi stok, lalu mencatat pembayaran dan kembalian.
-- Ringkasan penjualan mengelompokkan transaksi yang memiliki format `=== TRANSAKSI ===` berdasarkan tanggal dan bulan.
+- Pertahankan enam berkas TXT di folder `ProjectRPL2_` agar akun, katalog, dan riwayat tersedia setelah proyek di-clone.
+- Perubahan hasil restok dan transaksi mengubah `data.txt` atau berkas riwayat. Tinjau perubahan tersebut sebelum membuat commit.
+- Jangan menghapus atau mengganti nama berkas data tanpa menyesuaikan kode aplikasi.
+- `User.txt` berisi kata sandi dalam teks biasa. Gunakan akun latihan dan jangan unggah kata sandi yang dipakai pada layanan lain.
 
-## Menjaga data dan menggunakan Git
+## Susunan kode utama
 
-- Sertakan enam berkas TXT di folder `ProjectRPL2_` saat melakukan commit agar proyek dapat dijalankan setelah di-clone.
-- Restok mengubah `data.txt`; penambahan barang dan kategori mengubah `data.txt` atau `kategori.txt`; keranjang dan aktivitas transaksi juga memperbarui berkas TXT terkait. Periksa perubahan data sebelum commit.
-- `User.txt` menyimpan password dalam teks biasa. Gunakan akun latihan; jangan gunakan password yang dipakai pada layanan lain.
-
-## Kode utama
-
-- `Form1.cs` — login dan pengalihan berdasarkan peran.
-- `UserStore.cs` — membaca dan memvalidasi akun.
-- `WarehouseStore.cs` — operasi kategori, katalog, stok, keranjang, checkout, dan ringkasan penjualan.
-- `admin.cs` — menu Admin.
-- `kasir.cs` — menu Kasir.
-- `RoleDashboard.cs` — dialog input, tampilan riwayat, pencarian, dan ringkasan.
+- `Form1.cs` — halaman login dan pengalihan berdasarkan peran.
+- `UserStore.cs` — membaca serta memvalidasi akun pada `User.txt`.
+- `WarehouseStore.cs` — membaca katalog, mengubah stok, dan mencatat riwayat.
+- `admin.cs` — halaman admin dan fungsi restok.
+- `kasir.cs` — halaman kasir dan proses penjualan.
+- `RoleDashboard.cs` — tampilan daftar data dan pembuka riwayat.
