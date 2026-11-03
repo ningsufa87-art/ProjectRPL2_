@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Profile 1": {
+      "commandName": "Project",
+      "jsWebView2Debugging": false,
+      "sqlDebugging": false
+    }
+  }
+}
