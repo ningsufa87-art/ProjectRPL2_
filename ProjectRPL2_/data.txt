@@ -18,7 +18,7 @@
 118,Doritos Nacho Cheese,22,15000,aktif
 119,Pringles Original,12,25000,aktif
 120,Tic Tac Mint,70,3000,aktif
-201,Aqua 600ml,96,4000,aktif
+201,Aqua 600ml,93,4000,aktif
 202,Aqua 1500ml,80,7000,aktif
 203,Teh Botol Sosro,60,5000,aktif
 204,Teh Pucuk Harum,65,4500,aktif

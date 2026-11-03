@@ -3,30 +3,30 @@ using System.Windows.Forms;
 
 namespace ProjectRPL2_
 {
-    public partial class Form1 : Form
+    public partial class FormLogin : Form
     {
-        public string Currentuser { get; private set; } = string.Empty;
+        public string penggunaAktif { get; private set; } = string.Empty;
 
-        public Form1() => InitializeComponent();
+        public FormLogin() => InitializeComponent();
 
-        private void button1_Click(object sender, EventArgs e)
+        private void tombolLogin_Click(object sender, EventArgs e)
         {
-            string username = textBox1.Text.Trim();
-            string password = usernme.Text;
-            if (username.Length == 0 || password.Length == 0)
+            string namaPengguna = inputUsername.Text.Trim();
+            string kataSandi = inputPassword.Text;
+            if (namaPengguna.Length == 0 || kataSandi.Length == 0)
             {
                 MessageBox.Show("Username dan password wajib diisi.", "Login", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            UserStore.User? user;
+            PengelolaAkun.Pengguna? pengguna;
             try
             {
-                user = UserStore.Authenticate(username, password);
+                pengguna = PengelolaAkun.validasiLogin(namaPengguna, kataSandi);
             }
             catch (FileNotFoundException)
             {
-                MessageBox.Show($"Berkas User.txt tidak ditemukan di folder data:\n{WarehouseStore.Root}", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Berkas User.txt tidak ditemukan di folder data:\n{PenyimpananGudang.folderData}", "Data akun", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             catch (IOException ex)
@@ -40,34 +40,38 @@ namespace ProjectRPL2_
                 return;
             }
 
-            if (user is null)
+            if (pengguna is null)
             {
                 MessageBox.Show("Username atau password salah, akun ganda, atau peran akun tidak valid.", "Login gagal", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                usernme.Clear();
-                usernme.Focus();
+                inputPassword.Clear();
+                inputPassword.Focus();
                 return;
             }
 
-            Currentuser = user.Username;
-            Form destination = user.Role switch
+            penggunaAktif = pengguna.NamaPengguna;
+            Form formTujuan = pengguna.Peran switch
             {
-                "admin" => new AdminForm(Currentuser),
-                "kasir" => new KasirForm(Currentuser),
+                "admin" => new FormAdmin(penggunaAktif),
+                "kasir" => new FormKasir(penggunaAktif),
                 _ => throw new InvalidOperationException("Peran akun tidak didukung.")
             };
 
             Hide();
-            destination.FormClosed += (_, _) =>
+            formTujuan.FormClosed += (_, _) =>
             {
-                textBox1.Clear();
-                usernme.Clear();
+                inputUsername.Clear();
+                inputPassword.Clear();
                 Show();
                 Activate();
             };
-            destination.Show(this);
+            formTujuan.Show(this);
         }
 
-        private void button2_Click(object sender, EventArgs e) =>
+        private void tombolBelumPunyaAkun_Click(object sender, EventArgs e) =>
             MessageBox.Show("Silakan hubungi admin untuk mendapatkan akun aplikasi.", "Informasi akun", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }
+
+
+
+

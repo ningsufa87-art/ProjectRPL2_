@@ -1,6 +1,6 @@
-﻿namespace ProjectRPL2_
+namespace ProjectRPL2_
 {
-    partial class KasirForm
+    partial class FormKasir
     {
         /// <summary>
         /// Required designer variable.
@@ -31,9 +31,12 @@
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "Dashboard Kasir";
+            this.Name = "FormKasir";
+            this.Text = "FormKasir";
         }
 
         #endregion
     }
 }
+
+
